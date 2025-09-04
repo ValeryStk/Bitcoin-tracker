@@ -1,0 +1,8 @@
+BTC_PRICE_FETCHER_DIR = $$PWD
+INCLUDEPATH += $$BTC_PRICE_FETCHER_DIR
+
+SOURCES += \
+$$BTC_PRICE_FETCHER_DIR\btc_price_fetcher.cpp\
+
+HEADERS += \
+$$BTC_PRICE_FETCHER_DIR\btc_price_fetcher.h\
