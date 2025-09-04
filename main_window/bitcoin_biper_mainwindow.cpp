@@ -120,8 +120,9 @@ void BitcoinBiperMainWindow::updateBtcPrice()
 {
     btc_fetcher->fetchPrice();
     double average_price = calculateAverageEntryPrice(ui->tableWidget_transactions,0);
-    ui->label_average_price->setText(QString::number(average_price));
-    qDebug()<<calculateTotalProfitLoss(ui->tableWidget_transactions,0,1,btc_fetcher->last_fetched_btc_price());
+
+    double profit = calculateTotalProfitLoss(ui->tableWidget_transactions,0,1,btc_fetcher->last_fetched_btc_price());
+    ui->label_average_price->setText(QString::number(profit));
 }
 
 
