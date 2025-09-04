@@ -19,6 +19,72 @@ QPixmap renderSvgToPixmap(const QByteArray& svgData,
     return pixmap;
 }
 
+
+double calculateAverageEntryPrice(QTableWidget* table, int columnIndex) {
+    double sum = 0.0;
+    int count = 0;
+
+    for (int row = 0; row < table->rowCount(); ++row) {
+        QTableWidgetItem* item = table->item(row, columnIndex);
+        if (item && !item->text().isEmpty()) {
+            bool ok;
+            // Удаляем разделители тысяч, если есть
+            QString cleanText = item->text().remove(',');
+            double value = cleanText.toDouble(&ok);
+            if (ok) {
+                sum += value;
+                count++;
+            }
+        }
+    }
+
+    return (count > 0) ? (sum / count) : 0.0;
+}
+
+void updateBTCAmount(QTableWidget* table, int row, int usdtColumn, int btcColumn, double btcPriceUSD) {
+    QTableWidgetItem* usdtItem = table->item(row, usdtColumn);
+    if (!usdtItem) return;
+
+    bool ok;
+    QString cleanText = usdtItem->text().remove(',');  // если есть разделители
+    double usdtAmount = cleanText.toDouble(&ok);
+    if (!ok) return;
+
+    double btcAmount = usdtAmount / btcPriceUSD;
+
+    // Форматируем BTC с 8 знаками после запятой
+    QString btcText = QString::number(btcAmount, 'f', 8);
+    table->setItem(row, btcColumn, new QTableWidgetItem(btcText));
+}
+
+
+double calculateTotalProfitLoss(QTableWidget* table,
+                                int entryPriceColumn,
+                                int btcAmountColumn,
+                                double currentBTCPrice) {
+    double totalProfitLoss = 0.0;
+
+    for (int row = 0; row < table->rowCount(); ++row) {
+        QTableWidgetItem* entryItem = table->item(row, entryPriceColumn);
+        QTableWidgetItem* btcItem = table->item(row, btcAmountColumn);
+
+        if (!entryItem || !btcItem) continue;
+
+        bool ok1, ok2;
+        double entryPrice = entryItem->text().remove(',').toDouble(&ok1);
+        double btcAmount = btcItem->text().remove(',').toDouble(&ok2);
+
+        if (ok1 && ok2) {
+            double profitLoss = (currentBTCPrice - entryPrice) * btcAmount;
+            totalProfitLoss += profitLoss;
+        }
+    }
+
+    return totalProfitLoss;
+}
+
+
+
 }
 
 
@@ -32,6 +98,17 @@ BitcoinBiperMainWindow::BitcoinBiperMainWindow(QWidget *parent)
     connect(m_btc_timer,SIGNAL(timeout()),this ,SLOT(updateBtcPrice()));
     m_btc_timer->start(10000);
     ui->label_btc_logo->setPixmap(renderSvgToPixmap(svg_btc,ui->label_btc_logo->size()));
+
+        ui->tableWidget_transactions->setRowCount(5);      // Количество строк
+        ui->tableWidget_transactions->setColumnCount(3);   // Количество столбцов
+
+        // Устанавливаем заголовок столбца
+        QStringList headers;
+        headers << "Цена входа" << "Количество в BTC" << "Количество в USDT";
+        ui->tableWidget_transactions->setHorizontalHeaderLabels(headers);
+
+        // Настройка внешнего вида
+        ui->tableWidget_transactions->horizontalHeader()->setStretchLastSection(true);
 }
 
 BitcoinBiperMainWindow::~BitcoinBiperMainWindow()
@@ -42,5 +119,17 @@ BitcoinBiperMainWindow::~BitcoinBiperMainWindow()
 void BitcoinBiperMainWindow::updateBtcPrice()
 {
     btc_fetcher->fetchPrice();
+    double average_price = calculateAverageEntryPrice(ui->tableWidget_transactions,0);
+    ui->label_average_price->setText(QString::number(average_price));
+    qDebug()<<calculateTotalProfitLoss(ui->tableWidget_transactions,0,1,btc_fetcher->last_fetched_btc_price());
+}
+
+
+void BitcoinBiperMainWindow::on_tableWidget_transactions_cellChanged(int row,
+                                                                     int column)
+{
+   if(column!=2)return;
+   double price = ui->tableWidget_transactions->item(row,0)->text().toDouble();
+   updateBTCAmount(ui->tableWidget_transactions,row,column,1,price);
 }
 

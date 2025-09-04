@@ -24,5 +24,6 @@ private:
 
 private slots:
     void updateBtcPrice();
+    void on_tableWidget_transactions_cellChanged(int row, int column);
 };
 #endif // BITCOIN_BIPER_MAINWINDOW_H

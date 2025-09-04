@@ -30,9 +30,15 @@ void BTCPriceFetcher::onResult(QNetworkReply* reply) {
     QJsonDocument jsonDoc = QJsonDocument::fromJson(responseData);
     QJsonObject jsonObj = jsonDoc.object();
     double price = jsonObj["price"].toString().toDouble();
+    m_last_fetched_btc_price = price;
     QLocale locale = QLocale::system();
     QString formattedPrice = locale.toString(price, 'f', 2);
     priceField->setText(formattedPrice);
     reply->deleteLater();
+}
+
+double BTCPriceFetcher::last_fetched_btc_price() const
+{
+    return m_last_fetched_btc_price;
 }
 
