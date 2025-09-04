@@ -6,7 +6,9 @@
 
 BTCPriceFetcher::BTCPriceFetcher(QLabel* priceField)
     : QObject(nullptr),
-      priceField(priceField) {
+      priceField(priceField),
+      m_last_fetched_btc_price(0){
+
     manager = new QNetworkAccessManager(this);
     connect(manager, &QNetworkAccessManager::finished,
             this, &BTCPriceFetcher::onResult);
