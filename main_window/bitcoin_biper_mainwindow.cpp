@@ -27,7 +27,7 @@ QPixmap renderSvgToPixmap(const QByteArray& svgData,
 double calculateAverageEntryPrice(QTableWidget* table, int columnIndex) {
     double sum = 0.0;
     int count = 0;
-
+    if(table == nullptr) return 0;
     for (int row = 0; row < table->rowCount(); ++row) {
         QTableWidgetItem* item = table->item(row, columnIndex);
         if (item && !item->text().isEmpty()) {
@@ -45,20 +45,40 @@ double calculateAverageEntryPrice(QTableWidget* table, int columnIndex) {
     return (count > 0) ? (sum / count) : 0.0;
 }
 
-void updateBTCAmount(QTableWidget* table, int row, int usdtColumn, int btcColumn, double btcPriceUSD) {
-    QTableWidgetItem* usdtItem = table->item(row, usdtColumn);
+void updateBTCAmount(QTableWidget* table,
+                     int row,
+                     int сolumn) {
+
+    if(!table)return;
+    QTableWidgetItem* usdtItem = table->item(row, 2);
     if (!usdtItem) return;
+    QTableWidgetItem* entryPriceItem = table->item(row, 0);
+    QTableWidgetItem* btcAmountItem = table->item(row, 1);
 
     bool ok;
-    QString cleanText = usdtItem->text().remove(',');  // если есть разделители
+    QString cleanText = usdtItem->text().remove(',');
     double usdtAmount = cleanText.toDouble(&ok);
     if (!ok) return;
 
-    double btcAmount = usdtAmount / btcPriceUSD;
 
-    // Форматируем BTC с 8 знаками после запятой
-    QString btcText = QString::number(btcAmount, 'f', 8);
-    table->setItem(row, btcColumn, new QTableWidgetItem(btcText));
+    cleanText = entryPriceItem->text().remove(',');
+    double entryPrice = cleanText.toDouble(&ok);
+    if (!ok) return;
+
+
+    cleanText = btcAmountItem->text().remove(',');
+    double btcAmount = cleanText.toDouble(&ok);
+    if (!ok) return;
+
+    if(сolumn==2){
+    double newBtcAmount = usdtAmount / entryPrice;
+    QString btcText = QString::number(newBtcAmount, 'f', 8);
+    table->setItem(row, 1, new QTableWidgetItem(btcText));
+    }else if(сolumn==1){
+    usdtAmount = btcAmount * entryPrice;
+    QString usdtAmountText = QString::number(usdtAmount, 'f', 8);
+    table->setItem(row, 2, new QTableWidgetItem(usdtAmountText));
+    }
 }
 
 
@@ -207,9 +227,16 @@ void BitcoinBiperMainWindow::updateBtcPrice()
 void BitcoinBiperMainWindow::on_tableWidget_transactions_cellChanged(int row,
                                                                      int column)
 {
-    if(column!=2)return;
-    double price = ui->tableWidget_transactions->item(row,0)->text().toDouble();
-    updateBTCAmount(ui->tableWidget_transactions,row,column,1,price);
+    int rowCount = ui->tableWidget_transactions->rowCount();
+    int columnCount = ui->tableWidget_transactions->columnCount();
+
+    if (row >= 0 && row < rowCount && column >= 0 && column < columnCount) {
+                ui->tableWidget_transactions->blockSignals(true);
+                updateBTCAmount(ui->tableWidget_transactions, row, column);
+                ui->tableWidget_transactions->blockSignals(false);
+
+    }
+
 }
 
 
