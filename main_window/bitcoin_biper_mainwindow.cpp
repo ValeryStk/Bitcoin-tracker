@@ -144,7 +144,7 @@ void updateProfitLabel(QLabel* label, double profit) {
 }
 
 }
-
+TradingTableModel* ttm;
 
 BitcoinBiperMainWindow::BitcoinBiperMainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -152,12 +152,17 @@ BitcoinBiperMainWindow::BitcoinBiperMainWindow(QWidget *parent)
     ,m_btc_timer(new QTimer)
 {
     ui->setupUi(this);
-    TradingTableModel* ttm = new TradingTableModel;
+    ttm = new TradingTableModel;
     QTableView* tv = new QTableView;
+    tv->setWindowTitle("Entry points");
     tv->setModel(ttm);
     tv->show();
-    ttm->addTrade({100000,0.001,100});
-    ttm->addTrade({100000,0.001,100});
+    ttm->addTrade({100000,0,100});
+    ttm->addTrade({106500,0,100});
+    ttm->addTrade({108500,0,100});
+    ttm->addTrade({102500,0,100});
+    ttm->addTrade({101500,0,100});
+    ttm->addTrade({96500,0,100});
 
     btc_fetcher = new BTCPriceFetcher(ui->label_btc_price);
     connect(m_btc_timer,SIGNAL(timeout()),this ,SLOT(updateBtcPrice()));
@@ -200,6 +205,7 @@ void BitcoinBiperMainWindow::updateBtcPrice()
                                              btc_price);
 
     updateProfitLabel(ui->label_average_price,profit);
+    qDebug()<<"average price: "<<ttm->getLastSummary().averagePrice;
 }
 
 

@@ -1,10 +1,14 @@
 #include "trading_table_model.h"
 
+#include "qbrush.h"
+#include "qcolor.h"
+#include "qfont.h"
+
 constexpr int column_size = 3;
 
 TradingTableModel::TradingTableModel()
 {
-
+    trade_summary = {0,0,0};
 }
 
 int TradingTableModel::rowCount(const QModelIndex &parent) const
@@ -21,6 +25,34 @@ int TradingTableModel::columnCount(const QModelIndex &parent) const
 
 QVariant TradingTableModel::data(const QModelIndex &index, int role) const
 {
+
+
+    if (role == Qt::EditRole && index.row()<trades.size()) {
+        const TradeEntry &entry = trades.at(index.row());
+        switch (index.column()) {
+        case 0: return entry.purchasePrice;
+        case 1: return entry.amountBTC;
+        case 2: return entry.amountUSDT;
+        }
+    }
+
+
+    // Выделение последней строки
+    if (role == Qt::BackgroundRole && index.row()==trades.size()) {
+        return QBrush(QColor(255, 255, 200)); // мягкий жёлтый
+    }
+    // Тёмный цвет шрифта
+    if (role == Qt::ForegroundRole && index.row() == trades.size()) {
+        return QBrush(QColor(50, 50, 50)); // тёмно-серый
+    }
+
+    // Жирный шрифт
+    if (role == Qt::FontRole && index.row() == trades.size()) {
+        QFont font;
+        font.setBold(true);
+        return font;
+    }
+
     if (!index.isValid() || role != Qt::DisplayRole)
         return QVariant();
     if (index.row() < trades.size()) {
@@ -39,6 +71,13 @@ QVariant TradingTableModel::data(const QModelIndex &index, int role) const
             totalBTC += entry.amountBTC;
             totalUSDT += entry.amountUSDT;
         }
+        trade_summary.totalUSDT = totalUSDT;
+        trade_summary.totalBTC = totalBTC;
+        trade_summary.averagePrice = totalUSDT / totalBTC;
+
+
+
+
         switch (index.column()) {
         case 0:
             return totalBTC > 0 ? totalUSDT / totalBTC : QVariant("—");
@@ -73,7 +112,7 @@ bool TradingTableModel::setData(const QModelIndex &index, const QVariant &value,
         return false;
 
     if (index.row() >= trades.size())
-         return false; // Результирующая строка — не редактируется
+        return false; // Результирующая строка — не редактируется
 
     TradeEntry &entry = trades[index.row()];
     bool ok = false;
@@ -102,7 +141,7 @@ Qt::ItemFlags TradingTableModel::flags(const QModelIndex &index) const
         return Qt::NoItemFlags;
 
     if (index.row() >= trades.size())
-            return Qt::ItemIsEnabled; // Результирующая строка — только для чтения
+        return Qt::ItemIsEnabled; // Результирующая строка — только для чтения
 
     Qt::ItemFlags defaultFlags = QAbstractTableModel::flags(index);
     if (index.column() == 0 || index.column() == 2) // Цена закупки и Сумма в USDT
@@ -111,20 +150,22 @@ Qt::ItemFlags TradingTableModel::flags(const QModelIndex &index) const
     return defaultFlags;
 }
 
-void TradingTableModel::addTrade(const TradeEntry &entry)
+void TradingTableModel::addTrade(const TradeEntry& entry)
 {
     // Проверка на положительные значения
-    if (entry.purchasePrice <= 0 || entry.amountBTC <= 0 || entry.amountUSDT <= 0)
+    if (entry.purchasePrice <= 0 || entry.amountUSDT <= 0)
         return;
 
-    // Проверка согласованности: USDT ≈ BTC × Цена
-    double expectedUSDT = entry.amountBTC * entry.purchasePrice;
-    double tolerance = 0.01; // допустимая погрешность
-
-    if (std::abs(expectedUSDT - entry.amountUSDT) > tolerance)
-        return; // несогласованные данные
+    // Пересчёт количества BTC
+    TradeEntry adjustedEntry = entry;
+    adjustedEntry.amountBTC = adjustedEntry.amountUSDT / adjustedEntry.purchasePrice;
 
     beginInsertRows(QModelIndex(), trades.size(), trades.size());
-    trades.append(entry);
+    trades.append(adjustedEntry);
     endInsertRows();
+}
+
+TradeSummary TradingTableModel::getLastSummary() const
+{
+    return trade_summary;
 }

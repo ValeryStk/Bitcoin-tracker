@@ -10,6 +10,12 @@ struct TradeEntry {
     double amountUSDT;
 };
 
+struct TradeSummary {
+    double averagePrice;
+    double totalBTC;
+    double totalUSDT;
+};
+
 class TradingTableModel:public QAbstractTableModel
 {
 public:
@@ -24,9 +30,11 @@ public:
     Qt::ItemFlags flags(const QModelIndex &index) const override;
 
     void addTrade(const TradeEntry &entry);
+    TradeSummary getLastSummary() const;
 
 private:
     QVector<TradeEntry> trades;
+    mutable TradeSummary trade_summary;
 };
 
 #endif // TRADING_TABLEMODEL_H
