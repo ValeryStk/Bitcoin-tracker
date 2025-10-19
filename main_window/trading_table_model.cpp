@@ -165,6 +165,16 @@ void TradingTableModel::addTrade(const TradeEntry& entry)
     endInsertRows();
 }
 
+void TradingTableModel::removeTrade(int row)
+{
+    if (row < 0 || row >= trades.size() - 1) // не удаляем результирующую строку
+        return;
+
+    beginRemoveRows(QModelIndex(), row, row);
+    trades.removeAt(row);
+    endRemoveRows();
+}
+
 TradeSummary TradingTableModel::getLastSummary() const
 {
     return trade_summary;

@@ -145,6 +145,7 @@ void updateProfitLabel(QLabel* label, double profit) {
 
 }
 TradingTableModel* ttm;
+QTableView* tv;
 
 BitcoinBiperMainWindow::BitcoinBiperMainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -153,8 +154,12 @@ BitcoinBiperMainWindow::BitcoinBiperMainWindow(QWidget *parent)
 {
     ui->setupUi(this);
     ttm = new TradingTableModel;
-    QTableView* tv = new QTableView;
+    tv = new QTableView;
     tv->setWindowTitle("Entry points");
+    tv->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(tv, &QTableView::customContextMenuRequested,
+            this, &BitcoinBiperMainWindow::showContextMenu);
+
     tv->setModel(ttm);
     tv->show();
     ttm->addTrade({100000,0,100});
@@ -205,7 +210,7 @@ void BitcoinBiperMainWindow::updateBtcPrice()
                                              btc_price);
 
     updateProfitLabel(ui->label_average_price,profit);
-    qDebug()<<"average price: "<<ttm->getLastSummary().averagePrice;
+    qDebug()<<"profit: "<<(btc_price - ttm->getLastSummary().averagePrice)*ttm->getLastSummary().totalBTC;
 }
 
 
@@ -227,5 +232,28 @@ void BitcoinBiperMainWindow::on_tableWidget_transactions_cellChanged(int row,
 void BitcoinBiperMainWindow::on_pushButton_save_to_json_clicked()
 {
     saveTableToJson(ui->tableWidget_transactions,"transactions");
+}
+
+void BitcoinBiperMainWindow::showContextMenu(const QPoint &pos)
+{
+    QModelIndex index = tv->indexAt(pos);
+
+    QMenu contextMenu;
+    QAction *addAction = contextMenu.addAction("Добавить сделку");
+    QAction *removeAction = contextMenu.addAction("Удалить сделку");
+
+    // Отключаем удаление, если клик по результирующей строке
+    if (index.row() == ttm->rowCount(index)-1){
+        qDebug()<<"-------------Delete row---------------"<<index.row();
+        removeAction->setEnabled(false);
+    }
+
+    QAction *selectedAction = contextMenu.exec(tv->viewport()->mapToGlobal(pos));
+    if (selectedAction == addAction) {
+        TradeEntry newEntry{100000,0,100};
+        ttm->addTrade(newEntry);
+    } else if (selectedAction == removeAction) {
+        ttm->removeTrade(index.row());
+    }
 }
 

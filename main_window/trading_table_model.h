@@ -30,6 +30,7 @@ public:
     Qt::ItemFlags flags(const QModelIndex &index) const override;
 
     void addTrade(const TradeEntry &entry);
+    void removeTrade(int row);
     TradeSummary getLastSummary() const;
 
 private:
