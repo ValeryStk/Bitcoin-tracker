@@ -25,76 +25,17 @@ QPixmap renderSvgToPixmap(const QByteArray& svgData,
     return pixmap;
 }
 
-void updateBTCAmount(QTableWidget* table,
-                     int row,
-                     int сolumn) {
-
-    if(!table)return;
-    QTableWidgetItem* usdtItem = table->item(row, 2);
-    if (!usdtItem) return;
-    QTableWidgetItem* entryPriceItem = table->item(row, 0);
-    QTableWidgetItem* btcAmountItem = table->item(row, 1);
-
-    bool ok;
-    QString cleanText = usdtItem->text().remove(',');
-    double usdtAmount = cleanText.toDouble(&ok);
-    if (!ok) return;
 
 
-    cleanText = entryPriceItem->text().remove(',');
-    double entryPrice = cleanText.toDouble(&ok);
-    if (!ok) return;
-
-
-    cleanText = btcAmountItem->text().remove(',');
-    double btcAmount = cleanText.toDouble(&ok);
-    if (!ok) return;
-
-    if(сolumn==2){
-    double newBtcAmount = usdtAmount / entryPrice;
-    QString btcText = QString::number(newBtcAmount, 'f', 8);
-    table->setItem(row, 1, new QTableWidgetItem(btcText));
-    }else if(сolumn==1){
-    usdtAmount = btcAmount * entryPrice;
-    QString usdtAmountText = QString::number(usdtAmount, 'f', 8);
-    table->setItem(row, 2, new QTableWidgetItem(usdtAmountText));
-    }
-}
-
-
-double calculateTotalProfitLoss(QTableWidget* table,
-                                int entryPriceColumn,
-                                int btcAmountColumn,
-                                double currentBTCPrice) {
-    double totalProfitLoss = 0.0;
-
-    for (int row = 0; row < table->rowCount(); ++row) {
-        QTableWidgetItem* entryItem = table->item(row, entryPriceColumn);
-        QTableWidgetItem* btcItem = table->item(row, btcAmountColumn);
-
-        if (!entryItem || !btcItem) continue;
-
-        bool ok1, ok2;
-        double entryPrice = entryItem->text().remove(',').toDouble(&ok1);
-        double btcAmount = btcItem->text().remove(',').toDouble(&ok2);
-
-        if (ok1 && ok2) {
-            double profitLoss = (currentBTCPrice - entryPrice) * btcAmount;
-            totalProfitLoss += profitLoss;
-        }
-    }
-
-    return totalProfitLoss;
-}
-
-void saveTableToJson(QTableWidget* table, const QString& filename) {
+void saveTableToJson(QList<TradeEntry> trades, const QString& filename) {
     QJsonArray dataArray;
 
-    for (int row = 0; row < table->rowCount(); ++row) {
+    for (int i = 0; i < trades.size(); ++i) {
         QJsonObject rowObject;
-        rowObject["цена входа"] = table->item(row, 0) ? table->item(row, 0)->text() : "";
-        rowObject["количество BTC"] = table->item(row, 1) ? table->item(row, 1)->text() : "";
-        rowObject["количество USDT"] = table->item(row, 2) ? table->item(row, 2)->text() : "";
+        auto te = trades[i];
+        rowObject["цена входа"] = QString::number(te.purchasePrice);
+        rowObject["количество BTC"] = QString::number(te.amountBTC);
+        rowObject["количество USDT"] = QString::number(te.amountUSDT);
         dataArray.append(rowObject);
     }
 
@@ -106,7 +47,7 @@ void saveTableToJson(QTableWidget* table, const QString& filename) {
     }
 }
 
-void loadTableFromJson(QTableWidget* table, const QString& filename) {
+void loadTableFromJson(TradingTableModel* model, const QString& filename) {
     QFile file(filename);
     if (!file.open(QIODevice::ReadOnly)) return;
 
@@ -116,15 +57,13 @@ void loadTableFromJson(QTableWidget* table, const QString& filename) {
     QJsonDocument doc = QJsonDocument::fromJson(jsonData);
     QJsonArray dataArray = doc.array();
 
-    table->setRowCount(dataArray.size());
-    table->setColumnCount(3);
-    table->setHorizontalHeaderLabels({"цена входа", "количество BTC", "количество USDT"});
-
     for (int row = 0; row < dataArray.size(); ++row) {
         QJsonObject obj = dataArray[row].toObject();
-        table->setItem(row, 0, new QTableWidgetItem(obj["цена входа"].toString()));
-        table->setItem(row, 1, new QTableWidgetItem(obj["количество BTC"].toString()));
-        table->setItem(row, 2, new QTableWidgetItem(obj["количество USDT"].toString()));
+        TradeEntry te;
+        te.amountBTC = obj["количество BTC"].toString().toDouble();
+        te.amountUSDT = obj["количество USDT"].toString().toDouble();
+        te.purchasePrice = obj["цена входа"].toString().toDouble();
+        model->addTrade(te);
     }
 }
 
@@ -154,7 +93,8 @@ BitcoinBiperMainWindow::BitcoinBiperMainWindow(QWidget *parent)
 {
     ui->setupUi(this);
     ttm = new TradingTableModel;
-    tv = new QTableView;
+    tv = ui->tableView_bitcoin_entry_points;
+    tv->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
     tv->setWindowTitle("Entry points");
     tv->setContextMenuPolicy(Qt::CustomContextMenu);
     tv->setSelectionMode(QAbstractItemView::SelectionMode::SingleSelection);
@@ -163,38 +103,13 @@ BitcoinBiperMainWindow::BitcoinBiperMainWindow(QWidget *parent)
             this, &BitcoinBiperMainWindow::showContextMenu);
 
     tv->setModel(ttm);
+    loadTableFromJson(ttm,"transactions");
     tv->show();
-    ttm->addTrade({100000,0,100});
-    ttm->addTrade({106500,0,100});
-    ttm->addTrade({108500,0,100});
-    ttm->addTrade({102500,0,100});
-    ttm->addTrade({101500,0,100});
-    ttm->addTrade({96500,0,100});
 
     btc_fetcher = new BTCPriceFetcher(ui->label_btc_price);
     connect(m_btc_timer,SIGNAL(timeout()),this ,SLOT(updateBtcPrice()));
     m_btc_timer->start(10000);
     ui->label_btc_logo->setPixmap(renderSvgToPixmap(svg_btc,ui->label_btc_logo->size()));
-    loadTableFromJson(ui->tableWidget_transactions,"transactions");
-
-    // Устанавливаем заголовок столбца
-    QStringList headers;
-    headers << "Цена входа" << "Количество в BTC" << "Количество в USDT";
-    ui->tableWidget_transactions->setHorizontalHeaderLabels(headers);
-
-    // Настройка внешнего вида
-    ui->tableWidget_transactions->horizontalHeader()->setStretchLastSection(true);
-    ui->tableWidget_transactions->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
-    ui->tableWidget_transactions->verticalHeader()->setVisible(false);
-
-    for (int row = 0; row < ui->tableWidget_transactions->rowCount(); ++row) {
-        for (int col = 0; col < ui->tableWidget_transactions->columnCount(); ++col) {
-            QTableWidgetItem* item = ui->tableWidget_transactions->item(row, col);
-            if (item) {
-                item->setTextAlignment(Qt::AlignCenter);
-            }
-        }
-    }
 }
 
 BitcoinBiperMainWindow::~BitcoinBiperMainWindow()
@@ -206,34 +121,15 @@ void BitcoinBiperMainWindow::updateBtcPrice()
 {
     btc_fetcher->fetchPrice();
     double btc_price = btc_fetcher->last_fetched_btc_price();
-    double profit = calculateTotalProfitLoss(ui->tableWidget_transactions,
-                                             0,
-                                             1,
-                                             btc_price);
-
-    updateProfitLabel(ui->label_average_price,profit);
-    qDebug()<<"profit: "<<(btc_price - ttm->getLastSummary().averagePrice)*ttm->getLastSummary().totalBTC;
+    auto profit = (btc_price - ttm->getLastSummary().averagePrice)*ttm->getLastSummary().totalBTC;
+    qDebug()<<"-->"<<profit;
+    updateProfitLabel(ui->label_profit,profit);
 }
 
-
-void BitcoinBiperMainWindow::on_tableWidget_transactions_cellChanged(int row,
-                                                                     int column)
-{
-    int rowCount = ui->tableWidget_transactions->rowCount();
-    int columnCount = ui->tableWidget_transactions->columnCount();
-
-    if (row >= 0 && row < rowCount && column >= 0 && column < columnCount) {
-                ui->tableWidget_transactions->blockSignals(true);
-                updateBTCAmount(ui->tableWidget_transactions, row, column);
-                ui->tableWidget_transactions->blockSignals(false);
-
-    }
-
-}
 
 void BitcoinBiperMainWindow::on_pushButton_save_to_json_clicked()
 {
-    saveTableToJson(ui->tableWidget_transactions,"transactions");
+    saveTableToJson(ttm->getTradesEntries(),"transactions");
 }
 
 void BitcoinBiperMainWindow::showContextMenu(const QPoint &pos)

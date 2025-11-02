@@ -64,10 +64,10 @@
      </layout>
     </item>
     <item>
-     <widget class="QTableWidget" name="tableWidget_transactions"/>
+     <widget class="QTableView" name="tableView_bitcoin_entry_points"/>
     </item>
     <item>
-     <widget class="QLabel" name="label_average_price">
+     <widget class="QLabel" name="label_profit">
       <property name="font">
        <font>
         <pointsize>16</pointsize>

@@ -32,6 +32,7 @@ public:
     void addTrade(const TradeEntry &entry);
     void removeTrade(int row);
     TradeSummary getLastSummary() const;
+    QList<TradeEntry> getTradesEntries() const;
 
 private:
     QList<TradeEntry> trades;

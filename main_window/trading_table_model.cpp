@@ -10,6 +10,7 @@ constexpr int column_size = 3;
 TradingTableModel::TradingTableModel()
 {
     trade_summary = {0,0,0};
+
 }
 
 int TradingTableModel::rowCount(const QModelIndex &parent) const
@@ -56,7 +57,7 @@ QVariant TradingTableModel::data(const QModelIndex &index, int role) const
 
     if (!index.isValid() || role != Qt::DisplayRole)
         return QVariant();
-    if (index.row() < trades.size()-1) {
+    if (index.row() < trades.size()) {
         const TradeEntry &entry = trades.at(index.row());
         switch (index.column()) {
         case 0: return entry.purchasePrice;
@@ -180,4 +181,9 @@ void TradingTableModel::removeTrade(int row)
 TradeSummary TradingTableModel::getLastSummary() const
 {
     return trade_summary;
+}
+
+QList<TradeEntry> TradingTableModel::getTradesEntries() const
+{
+    return trades;
 }
