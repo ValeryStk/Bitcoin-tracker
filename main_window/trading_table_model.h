@@ -34,7 +34,7 @@ public:
     TradeSummary getLastSummary() const;
 
 private:
-    QVector<TradeEntry> trades;
+    QList<TradeEntry> trades;
     mutable TradeSummary trade_summary;
 };
 

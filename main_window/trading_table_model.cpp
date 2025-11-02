@@ -2,6 +2,7 @@
 
 #include "qbrush.h"
 #include "qcolor.h"
+#include "qdebug.h"
 #include "qfont.h"
 
 constexpr int column_size = 3;
@@ -55,7 +56,7 @@ QVariant TradingTableModel::data(const QModelIndex &index, int role) const
 
     if (!index.isValid() || role != Qt::DisplayRole)
         return QVariant();
-    if (index.row() < trades.size()) {
+    if (index.row() < trades.size()-1) {
         const TradeEntry &entry = trades.at(index.row());
         switch (index.column()) {
         case 0: return entry.purchasePrice;
@@ -167,7 +168,8 @@ void TradingTableModel::addTrade(const TradeEntry& entry)
 
 void TradingTableModel::removeTrade(int row)
 {
-    if (row < 0 || row >= trades.size() - 1) // не удаляем результирующую строку
+    qDebug()<<"remove row with index: "<<row;
+    if (row < 0 || row == trades.size()) // не удаляем результирующую строку
         return;
 
     beginRemoveRows(QModelIndex(), row, row);

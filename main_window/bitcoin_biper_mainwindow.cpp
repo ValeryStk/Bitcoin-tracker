@@ -157,6 +157,8 @@ BitcoinBiperMainWindow::BitcoinBiperMainWindow(QWidget *parent)
     tv = new QTableView;
     tv->setWindowTitle("Entry points");
     tv->setContextMenuPolicy(Qt::CustomContextMenu);
+    tv->setSelectionMode(QAbstractItemView::SelectionMode::SingleSelection);
+    tv->setSelectionBehavior(QAbstractItemView::SelectionBehavior::SelectRows);
     connect(tv, &QTableView::customContextMenuRequested,
             this, &BitcoinBiperMainWindow::showContextMenu);
 
