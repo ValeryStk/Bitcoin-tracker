@@ -16,8 +16,8 @@ struct TradeSummary {
     double totalUSDT;
 };
 
-class TradingTableModel:public QAbstractTableModel
-{
+class TradingTableModel : public QAbstractTableModel {
+    Q_OBJECT
 public:
     TradingTableModel();
 
@@ -25,18 +25,24 @@ public:
     int rowCount(const QModelIndex &parent) const override;
     int columnCount(const QModelIndex &parent) const override;
     QVariant data(const QModelIndex &index, int role) const override;
-    QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
-    bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole) override;
+    QVariant headerData(int section, Qt::Orientation orientation,
+                        int role = Qt::DisplayRole) const override;
+    bool setData(const QModelIndex &index, const QVariant &value,
+                 int role = Qt::EditRole) override;
     Qt::ItemFlags flags(const QModelIndex &index) const override;
 
     void addTrade(const TradeEntry &entry);
     void removeTrade(int row);
     TradeSummary getLastSummary() const;
     QList<TradeEntry> getTradesEntries() const;
+    void recalculateSummary();
 
 private:
     QList<TradeEntry> trades;
     mutable TradeSummary trade_summary;
+
+signals:
+    void tableUpdated(QPrivateSignal);
 };
 
-#endif // TRADING_TABLEMODEL_H
+#endif  // TRADING_TABLEMODEL_H

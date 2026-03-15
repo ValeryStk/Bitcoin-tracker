@@ -62,24 +62,15 @@ QVariant TradingTableModel::data(const QModelIndex &index, int role) const {
                 return QVariant();
         }
     } else {
-        // Результирующая строка
-        double totalBTC = 0.0;
-        double totalUSDT = 0.0;
-        for (const TradeEntry &entry : trades) {
-            totalBTC += entry.amountBTC;
-            totalUSDT += entry.amountUSDT;
-        }
-        trade_summary.totalUSDT = totalUSDT;
-        trade_summary.totalBTC = totalBTC;
-        trade_summary.averagePrice = totalUSDT / totalBTC;
-
         switch (index.column()) {
             case 0:
-                return totalBTC > 0 ? totalUSDT / totalBTC : QVariant("—");
+                return trade_summary.totalBTC > 0
+                           ? trade_summary.totalUSDT / trade_summary.totalBTC
+                           : QVariant("—");
             case 1:
-                return totalBTC;
+                return QString::number(trade_summary.totalBTC, 'f', 6);
             case 2:
-                return totalUSDT;
+                return QString::number(trade_summary.totalUSDT, 'f', 2);
             default:
                 return QVariant();
         }
@@ -124,10 +115,11 @@ bool TradingTableModel::setData(const QModelIndex &index, const QVariant &value,
     } else {
         return false;
     }
-
+    recalculateSummary();
     emit dataChanged(index, index);
     emit dataChanged(this->index(index.row(), 1),
                      this->index(index.row(), 1));  // Обновляем BTC
+    emit tableUpdated(QPrivateSignal{});
     return true;
 }
 
@@ -172,3 +164,15 @@ void TradingTableModel::removeTrade(int row) {
 TradeSummary TradingTableModel::getLastSummary() const { return trade_summary; }
 
 QList<TradeEntry> TradingTableModel::getTradesEntries() const { return trades; }
+
+void TradingTableModel::recalculateSummary() {
+    double totalBTC = 0.0;
+    double totalUSDT = 0.0;
+    for (const TradeEntry &entry : qAsConst(trades)) {
+        totalBTC += entry.amountBTC;
+        totalUSDT += entry.amountUSDT;
+    }
+    trade_summary.totalUSDT = totalUSDT;
+    trade_summary.totalBTC = totalBTC;
+    trade_summary.averagePrice = totalUSDT / totalBTC;
+}

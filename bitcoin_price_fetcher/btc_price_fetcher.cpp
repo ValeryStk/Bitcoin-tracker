@@ -1,17 +1,14 @@
 #include "btc_price_fetcher.h"
 
+#include <QDebug>
 #include <QJsonDocument>
 #include <QJsonObject>
-#include <QDebug>
 
 BTCPriceFetcher::BTCPriceFetcher(QLabel* priceField)
-    : QObject(nullptr),
-      priceField(priceField),
-      m_last_fetched_btc_price(0){
-
+    : QObject(nullptr), priceField(priceField), m_last_fetched_btc_price(0) {
     manager = new QNetworkAccessManager(this);
-    connect(manager, &QNetworkAccessManager::finished,
-            this, &BTCPriceFetcher::onResult);
+    connect(manager, &QNetworkAccessManager::finished, this,
+            &BTCPriceFetcher::onResult);
 }
 
 void BTCPriceFetcher::fetchPrice() {
@@ -21,7 +18,6 @@ void BTCPriceFetcher::fetchPrice() {
 }
 
 void BTCPriceFetcher::onResult(QNetworkReply* reply) {
-
     if (reply->error() != QNetworkReply::NoError) {
         qDebug() << "Ошибка получения цены BTC:" << reply->errorString();
         reply->deleteLater();
@@ -39,8 +35,10 @@ void BTCPriceFetcher::onResult(QNetworkReply* reply) {
     reply->deleteLater();
 }
 
-double BTCPriceFetcher::last_fetched_btc_price() const
-{
+double BTCPriceFetcher::last_fetched_btc_price() const {
     return m_last_fetched_btc_price;
 }
 
+void BTCPriceFetcher::setLastBtcFetchedPrice(const double btcPrice) {
+    m_last_fetched_btc_price = btcPrice;
+}
