@@ -18,6 +18,8 @@ constexpr char svg_btc[] =
 //clang-format on
 namespace {
 
+constexpr int UPDATE_BTC_PRICE_TIME_INTERVAL = 10'000;  // ms -> 10 секунд
+
 QPixmap renderSvgToPixmap(const QByteArray& svgData,
                           QSize size = QSize(64, 64)) {
     QSvgRenderer renderer(svgData);
@@ -135,7 +137,7 @@ BitcoinBiperMainWindow::BitcoinBiperMainWindow(QWidget* parent)
     btc_fetcher = new BTCPriceFetcher(ui->label_btc_price);
     btc_fetcher->setLastBtcFetchedPrice(loadLastBitcoinPrice());
     connect(m_btc_timer, SIGNAL(timeout()), this, SLOT(updateBtcPrice()));
-    m_btc_timer->start(10000);
+    m_btc_timer->start(UPDATE_BTC_PRICE_TIME_INTERVAL);
     ui->label_btc_logo->setPixmap(
         renderSvgToPixmap(svg_btc, ui->label_btc_logo->size()));
     updateBtcPrice();
@@ -143,6 +145,7 @@ BitcoinBiperMainWindow::BitcoinBiperMainWindow(QWidget* parent)
 
 BitcoinBiperMainWindow::~BitcoinBiperMainWindow() {
     saveLastBitcoinPrice(btc_fetcher->last_fetched_btc_price());
+    on_pushButton_save_to_json_clicked();
     delete ui;
 }
 
@@ -168,11 +171,14 @@ void BitcoinBiperMainWindow::showContextMenu(const QPoint& pos) {
     QModelIndex index = tv->indexAt(pos);
 
     QMenu contextMenu;
+    QAction* removeAction = nullptr;
     QAction* addAction = contextMenu.addAction("Add");
-    QAction* removeAction = contextMenu.addAction("Delete");
+    if (!tv->selectionModel()->selectedRows().isEmpty()) {
+        removeAction = contextMenu.addAction("Delete");
+    }
 
     // Отключаем удаление, если клик по результирующей строке
-    if (index.row() == ttm->rowCount(index) - 1) {
+    if ((index.row() == ttm->rowCount(index) - 1) && removeAction) {
         qDebug() << "-------------Delete row---------------" << index.row();
         removeAction->setEnabled(false);
     }
