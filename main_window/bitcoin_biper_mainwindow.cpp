@@ -118,7 +118,6 @@ BitcoinBiperMainWindow::BitcoinBiperMainWindow(QWidget* parent)
       ui(new Ui::BitcoinBiperMainWindow),
       m_btc_timer(new QTimer) {
     ui->setupUi(this);
-    ui->pushButton_save_to_json->setVisible(false);
     ttm = new TradingTableModel;
     tv = ui->tableView_bitcoin_entry_points;
     tv->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
@@ -131,7 +130,7 @@ BitcoinBiperMainWindow::BitcoinBiperMainWindow(QWidget* parent)
     connect(ttm, &TradingTableModel::tableUpdated, this,
             &BitcoinBiperMainWindow::updateProfit);
     connect(ttm, &TradingTableModel::tableUpdated, this,
-            &BitcoinBiperMainWindow::on_pushButton_save_to_json_clicked);
+            &BitcoinBiperMainWindow::saveDataToJson);
     addTradeShortcut = new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_N), this);
     connect(addTradeShortcut, &QShortcut::activated, this,
             &BitcoinBiperMainWindow::addTrade);
@@ -151,7 +150,7 @@ BitcoinBiperMainWindow::BitcoinBiperMainWindow(QWidget* parent)
 
 BitcoinBiperMainWindow::~BitcoinBiperMainWindow() {
     saveLastBitcoinPrice(btc_fetcher->last_fetched_btc_price());
-    on_pushButton_save_to_json_clicked();
+    saveDataToJson();
     delete ui;
 }
 
@@ -169,7 +168,7 @@ void BitcoinBiperMainWindow::updateProfit() {
     qDebug() << "-----update profit----->";
 }
 
-void BitcoinBiperMainWindow::on_pushButton_save_to_json_clicked() {
+void BitcoinBiperMainWindow::saveDataToJson() {
     saveTableToJson(ttm->getTradesEntries(), "transactions");
 }
 

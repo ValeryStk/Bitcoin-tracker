@@ -29,7 +29,7 @@ private:
 private slots:
     void updateBtcPrice();
     void updateProfit();
-    void on_pushButton_save_to_json_clicked();
+    void saveDataToJson();
     void showContextMenu(const QPoint &pos);
     void addTrade();
 };
