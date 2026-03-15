@@ -10,9 +10,7 @@ class BTCPriceFetcher : public QObject {
     Q_OBJECT
 public:
     explicit BTCPriceFetcher(QLabel* priceField);
-
     void fetchPrice();
-
     double last_fetched_btc_price() const;
     void setLastBtcFetchedPrice(const double btcPrice);
 

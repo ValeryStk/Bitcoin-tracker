@@ -179,8 +179,10 @@ void BitcoinBiperMainWindow::showContextMenu(const QPoint& pos) {
     QMenu contextMenu;
     QAction* removeAction = nullptr;
     QAction* addAction = contextMenu.addAction("Add");
+    addAction->setIcon(QIcon(":/addTrade.svg"));
     if (!tv->selectionModel()->selectedRows().isEmpty()) {
         removeAction = contextMenu.addAction("Delete");
+        removeAction->setIcon(QIcon(":/deleteTrade.svg"));
     }
 
     if ((index.row() == ttm->rowCount(index) - 1) && removeAction) {

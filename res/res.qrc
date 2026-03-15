@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/">
+        <file>addTrade.svg</file>
+        <file>deleteTrade.svg</file>
+    </qresource>
+</RCC>
