@@ -118,6 +118,7 @@ BitcoinBiperMainWindow::BitcoinBiperMainWindow(QWidget* parent)
       ui(new Ui::BitcoinBiperMainWindow),
       m_btc_timer(new QTimer) {
     ui->setupUi(this);
+    ui->pushButton_save_to_json->setVisible(false);
     ttm = new TradingTableModel;
     tv = ui->tableView_bitcoin_entry_points;
     tv->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
@@ -129,6 +130,8 @@ BitcoinBiperMainWindow::BitcoinBiperMainWindow(QWidget* parent)
             &BitcoinBiperMainWindow::showContextMenu);
     connect(ttm, &TradingTableModel::tableUpdated, this,
             &BitcoinBiperMainWindow::updateProfit);
+    connect(ttm, &TradingTableModel::tableUpdated, this,
+            &BitcoinBiperMainWindow::on_pushButton_save_to_json_clicked);
 
     tv->setModel(ttm);
     loadTableFromJson(ttm, "transactions");
