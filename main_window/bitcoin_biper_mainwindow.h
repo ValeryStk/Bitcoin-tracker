@@ -2,6 +2,7 @@
 #define BITCOIN_BIPER_MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QShortcut>
 #include <QTimer>
 
 #include "btc_price_fetcher.h"
@@ -23,11 +24,13 @@ private:
     Ui::BitcoinBiperMainWindow *ui;
     QTimer *m_btc_timer;
     BTCPriceFetcher *btc_fetcher;
+    QShortcut *addTradeShortcut;
 
 private slots:
     void updateBtcPrice();
     void updateProfit();
     void on_pushButton_save_to_json_clicked();
     void showContextMenu(const QPoint &pos);
+    void addTrade();
 };
 #endif  // BITCOIN_BIPER_MAINWINDOW_H

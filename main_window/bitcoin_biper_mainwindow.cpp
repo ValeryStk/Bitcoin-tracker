@@ -132,6 +132,9 @@ BitcoinBiperMainWindow::BitcoinBiperMainWindow(QWidget* parent)
             &BitcoinBiperMainWindow::updateProfit);
     connect(ttm, &TradingTableModel::tableUpdated, this,
             &BitcoinBiperMainWindow::on_pushButton_save_to_json_clicked);
+    addTradeShortcut = new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_N), this);
+    connect(addTradeShortcut, &QShortcut::activated, this,
+            &BitcoinBiperMainWindow::addTrade);
 
     tv->setModel(ttm);
     loadTableFromJson(ttm, "transactions");
@@ -180,18 +183,20 @@ void BitcoinBiperMainWindow::showContextMenu(const QPoint& pos) {
         removeAction = contextMenu.addAction("Delete");
     }
 
-    // Отключаем удаление, если клик по результирующей строке
     if ((index.row() == ttm->rowCount(index) - 1) && removeAction) {
-        qDebug() << "-------------Delete row---------------" << index.row();
         removeAction->setEnabled(false);
     }
 
     QAction* selectedAction =
         contextMenu.exec(tv->viewport()->mapToGlobal(pos));
     if (selectedAction == addAction) {
-        TradeEntry newEntry{btc_fetcher->last_fetched_btc_price(), 0, 100};
-        ttm->addTrade(newEntry);
+        addTrade();
     } else if (selectedAction == removeAction) {
         ttm->removeTrade(index.row());
     }
+}
+
+void BitcoinBiperMainWindow::addTrade() {
+    TradeEntry newEntry{btc_fetcher->last_fetched_btc_price(), 0, 1};
+    ttm->addTrade(newEntry);
 }

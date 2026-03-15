@@ -149,6 +149,8 @@ void TradingTableModel::addTrade(const TradeEntry &entry) {
     beginInsertRows(QModelIndex(), trades.size(), trades.size());
     trades.append(adjustedEntry);
     endInsertRows();
+    recalculateSummary();
+    emit tableUpdated(QPrivateSignal{});
 }
 
 void TradingTableModel::removeTrade(int row) {
@@ -159,6 +161,8 @@ void TradingTableModel::removeTrade(int row) {
     beginRemoveRows(QModelIndex(), row, row);
     trades.removeAt(row);
     endRemoveRows();
+    recalculateSummary();
+    emit tableUpdated(QPrivateSignal{});
 }
 
 TradeSummary TradingTableModel::getLastSummary() const { return trade_summary; }
