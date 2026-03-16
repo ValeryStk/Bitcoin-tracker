@@ -10,7 +10,7 @@
 #define VER_COMPANYNAME_STR         "VLR"
 #define VER_FILEDESCRIPTION_STR     "Bitcoin tracker"
 #define VER_INTERNALNAME_STR        "Bitcoin tracker"
-#define VER_LEGALCOPYRIGHT_STR      "2025"
+#define VER_LEGALCOPYRIGHT_STR      "2026"
 #define VER_LEGALTRADEMARKS1_STR    "All Rights Reserved"
 #define VER_LEGALTRADEMARKS2_STR    VER_LEGALTRADEMARKS1_STR
 #define VER_ORIGINALFILENAME_STR    "Bitcoin tracker.exe"
